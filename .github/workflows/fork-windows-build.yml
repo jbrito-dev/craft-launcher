@@ -7,6 +7,9 @@ on:
     branches: [windows-build]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
@@ -35,3 +38,13 @@ jobs:
           name: artcraft-launcher-windows-x64
           path: dist/release/*
           if-no-files-found: error
+      # Also pushed to a branch, for fetching with plain git.
+      - name: Publish to the windows-artifacts branch
+        shell: bash
+        run: |
+          mkdir out && cp dist/release/* out/ && cd out
+          git init -q -b windows-artifacts
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A && git commit -qm "Windows x64 build of ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}" windows-artifacts
